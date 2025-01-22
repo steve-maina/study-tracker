@@ -6,7 +6,7 @@ import { ChevronDownIcon } from "@radix-ui/react-icons";
 import { useRef, useState } from "react";
 
 export default function SessionCreate() {
-    const [timeElapsed,setTimeElapsed] = useState(0)
+    const [timeElapsed,setTimeElapsed] = useState(58)
     const [isTimerRunning, setIsTimerRunning] = useState(false)
     const timerId = useRef<null | NodeJS.Timeout>(null)
     const [startTime,setStartTime] = useState("")

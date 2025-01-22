@@ -1,28 +1,15 @@
-import { PrismaClient } from '@prisma/client'
-import moment from 'moment';
+import { PrismaClient } from "@prisma/client";
+import moment from "moment";
+import Link from "next/link";
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 export default async function Home() {
-
   const allSessions = await prisma.session.findMany()
-  console.log(allSessions)
 
   return (
     <main className="flex flex-col justify-center items-center h-screen">
-      {allSessions.length > 0?
-      <ul>
-        {allSessions.map((session) => {
-          const timeInSeconds = moment.duration(session.duration,"seconds")
-          const hours = Math.floor(timeInSeconds.hours())
-          const minutes = Math.floor(timeInSeconds.minutes())
-          const date = moment(session.date,"YYYY-MM-DD")
-          const newDate = date.format("Do MMMM YYYY")
-
-          return <li key={session.id}>You read {session.topic} for {hours}h {minutes}min on {newDate}</li>
-        })}
-      </ul>
-      :<p>You have no study sessions saved</p>}
-    </main>
+     {allSessions.length >0? <p>Charts coming soon.<Link href="/view-sessions" className="underline decoration-blue-400 decoration-1 visited:decoration-purple-400">View Sessions in the mean time</Link></p>:<p>You have no study sessions. <Link href="/create-session" className="underline decoration-blue-400 decoration-1 visited:decoration-purple-400">Add one</Link></p>}
+     </main>
   );
 }
