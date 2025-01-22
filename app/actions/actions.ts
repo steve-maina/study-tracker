@@ -12,14 +12,7 @@ export default async function formSubmit(prevState: any, formData: FormData) {
   const endTime = formData.get("end");
   const operation = formData.get("operation");
   const formattedDate = date?.toString().replace(/ /gi, "-");
-  console.log({
-    topic,
-    duration,
-    startTime,
-    endTime,
-    operation,
-    formattedDate,
-  });
+  
   if (operation === "create") {
     formattedDate &&
       topic &&
