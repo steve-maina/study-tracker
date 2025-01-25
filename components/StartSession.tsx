@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import Form from 'next/form'
 import FormButtons, { SaveDialog } from "./Elements";
 import formSubmit from "@/app/actions/actions";
@@ -63,6 +63,7 @@ export default function StartSession(
 
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [topic, setTopic] = useState("")
+  const [timezone, setTimezone] = useState<string |undefined>(undefined)
   const [date,setDate] = useState(moment().format("YYYY MM DD"))
   const formRef = useRef<HTMLFormElement | null>(null)
   const triggerBtn = <FormButtons type="button" disabled={isTimerRunning ||isPending || (operation === "create" ? timeElapsed < 60:false)} onClick={clearDialogInputs}>Save Session</FormButtons>
@@ -78,6 +79,7 @@ export default function StartSession(
         <input type="hidden" value={startTime} name="start" />
         <input type="hidden" value={endTime} name="end" />
         <input type="hidden" value={operation} name="operation" />
+        <input type="hidden" value={timezone} name="timezone" />
         <div className="flex justify-between">
           {operation === "create" ? <><FormButtons type="button" disabled={isPending} onClick={isTimerRunning ? pauseTimer : startTimer}>{isTimerRunning ? "Pause" :
             (timeElapsed > 0 ? "Resume" : "Start")}</FormButtons><FormButtons type="button" disabled={isPending} onClick={stopTimer}>Reset</FormButtons></>:undefined}

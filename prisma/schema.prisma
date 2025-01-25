@@ -18,4 +18,7 @@ model Session {
   topic    String
   duration Int
   date     DateTime
+  month    Int
+  year     Int
+  day      Int
 }

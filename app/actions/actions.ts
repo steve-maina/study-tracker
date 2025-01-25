@@ -12,7 +12,7 @@ export default async function formSubmit(prevState: any, formData: FormData) {
   const endTime = formData.get("end");
   const operation = formData.get("operation");
   const formattedDate = date?.toString().replace(/ /gi, "-");
-  
+
   if (operation === "create") {
     formattedDate &&
       topic &&
@@ -23,6 +23,9 @@ export default async function formSubmit(prevState: any, formData: FormData) {
             topic: topic.toString(),
             duration: Number(duration.toString()),
             date: new Date(formattedDate),
+            month: Number(moment(formattedDate).format("M")),
+            year: Number(moment(formattedDate).format("YYYY")),
+            day: Number(moment(formattedDate).format("D")),
           },
         })
         .then(() => prisma.$disconnect());
@@ -38,10 +41,44 @@ export default async function formSubmit(prevState: any, formData: FormData) {
             topic: topic.toString(),
             duration: Number(timeElapsed.toString()),
             date: new Date(formattedDate),
+            month: Number(moment(formattedDate).format("M")),
+            year: Number(moment(formattedDate).format("YYYY")),
+            day: Number(moment(formattedDate).format("D")),
           },
         })
         .then(() => prisma.$disconnect());
       redirect("/view-sessions");
     }
   }
+}
+ 
+export async function updateChart(startDate: string,endDate: string){
+   const allSessions = await prisma.session.groupBy({
+    by:[
+      "date"
+    ],
+      where: {
+        date:{
+          lte:new Date(endDate),
+          gte:new Date(startDate)
+        }
+      },
+      orderBy:[
+        {date:"asc"}
+      ],
+      _sum: {
+        duration: true
+      },
+    }
+  );
+  console.log(allSessions)
+  const modifiedSessions = allSessions.map((session)=>{
+    return {totalTime:session._sum.duration ,dayOfWeek:moment(session.date).format("Do MMM 'YY")}
+  })
+  return modifiedSessions
+}
+
+export async function hello(){
+  console.log("hello from server")
+  return "hello from client"
 }
