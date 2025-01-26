@@ -29,20 +29,19 @@ export default function SessionChart() {
   async function setInitialSessions() {
     setSessions(await updateChart(startDate,endDate))
   }
-  const [timeUnit, setTimeUnit] = useState<timeUnit>("seconds")
-  const [prevTimeUnit,setPrevTimeUnit] = useState<timeUnit>("minutes")
+  const [timeUnit, setTimeUnit] = useState<timeUnit>("minutes")
   const[startDate,setStartDate] = useState(moment().subtract(7,"days").format("YYYY-MM-DD"))
   const[endDate,setEndDate] = useState(moment().subtract(1,"days").format("YYYY-MM-DD"))
   const [sessions, setSessions] = useState<Array<ModifiedSessions>>([])
-  useEffect(()=>{
-    const newSessions = sessions.map((session) => {
-      return {
-        ...session,
-        totalTime: convertToTimeUnit(session.totalTime as number,prevTimeUnit,timeUnit)
-      }
-    })
-    setSessions(newSessions)
-  },[timeUnit])
+  // useEffect(()=>{
+  //   // const newSessions = sessions.map((session) => {
+  //   //   return {
+  //   //     ...session,
+  //   //     totalTime: convertToTimeUnit(session.totalTime as number,timeUnit)
+  //   //   }
+  //   // })
+  //   setSessions([...sessions])
+  // },[timeUnit])
   useEffect(()=>{
     setInitialSessions()
   },[])
@@ -55,9 +54,14 @@ export default function SessionChart() {
       slots={{
         axisLabel:myChartText
       }}
-        dataset={sessions}
+        dataset={sessions.map((session)=>{
+          return {
+            ...session,
+            summary:convertToTimeUnit(session.totalTime as number,timeUnit)
+          }
+        })}
         xAxis={[{ scaleType: "band", dataKey: "dayOfWeek"}]}
-        series={[{ dataKey: "totalTime",label:`${timeUnit.charAt(0).toUpperCase()+timeUnit.slice(1)} read` }]}
+        series={[{ dataKey: "summary",label:`${timeUnit.charAt(0).toUpperCase()+timeUnit.slice(1)} read` }]}
         width={400}
         height={300}
       />
@@ -67,7 +71,7 @@ export default function SessionChart() {
         name="timeUnit" id="timeUnit" value={timeUnit} onChange={
           (event: React.ChangeEvent<HTMLSelectElement>) => {
             setTimeUnit((prevValue) =>{
-              setPrevTimeUnit(prevValue)
+            
               return event.target.value as timeUnit
             })
           }
