@@ -11,10 +11,10 @@ export default function getTotalTime(sessions:Array<Session>,targetTimeUnit: "se
       return total
 }
 
-export function convertToTimeUnit(duration: number,current:timeUnit,target: timeUnit){
-    const currentTimeDuration = moment.duration(duration,current)
+export function convertToTimeUnit(duration: number,target: timeUnit){
+    const currentTimeDuration = moment.duration(duration,"seconds")
     if(target == "seconds") {
-        return currentTimeDuration.asSeconds()
+        return duration
     } else if (target == "minutes") {
         return currentTimeDuration.asMinutes()
     } else if (target == "hours") {

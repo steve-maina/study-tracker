@@ -1,5 +1,12 @@
-import { PrismaClient, Session } from "@prisma/client";
+"use client"
+import ExportDataForm from "@/components/ExportData";
+import { Button } from "@mui/material";
+import { Prisma, PrismaClient, Session } from "@prisma/client";
 import moment, { duration } from "moment";
+import { getGroupedSessions, getSessions } from "../actions/actions";
+import { useEffect, useRef, useState } from "react";
+import { convertToTimeUnit, timeUnit } from "../lib/assorted-c";
+import { time } from "console";
 
 const prisma = new PrismaClient();
 // async function summaryDuration(unitTime: string) {
@@ -67,25 +74,43 @@ function getTimeObject(duration: number){
               minutes
             }
 }
+type grouped =(Prisma.PickEnumerable<Prisma.SessionGroupByOutputType, "date"[]> & {
+  _sum: {
+      duration: number | null;
+  };
+})[]
 
-export default async function Page() {
-  const allSessions = await prisma.session.findMany({
-    orderBy: [
-      {
-        date: "desc",
-      },
-    ],
-  });
-  const sortedSessions = getSortedSessions(allSessions, "month");
-  if (sortedSessions){
-    const summarySessions = getSummaryDuration(sortedSessions["1"])
-    console.log(getTimeObject(summarySessions))
-  }
+export default function Page() {
+  const [timeUnit, setTimeUnit] = useState("minutes")
+  const [allSessions,setAllSessions] = useState<Array<Session>>([])
+  const [summary,setSummary]= useState(0)
+  const [startDate, setStartDate] = useState(
+    moment().subtract(7, "days").format("YYYY-MM-DD")
+  );
+  const [endDate, setEndDate] = useState(
+    moment().subtract(1, "days").format("YYYY-MM-DD")
+  );
+  
+  useEffect(() => {
+    const fn = async() =>{
+      const sessions =  await getSessions(startDate,endDate)
+      const summary =   await getGroupedSessions(startDate,endDate)
+      setAllSessions(sessions)
+      
+    const newSummary = summary.reduce((acc, session)=>{
+      return session._sum.duration as number + acc
+    },0)
+    setSummary(newSummary)
+    }
+    fn()
+  },[startDate,endDate]
+  )
 
   // console.log(getSortedSessions(allSessions, "month"));
   return (
     <main className="flex flex-col justify-center items-center h-screen">
       {allSessions.length > 0 ? (
+        <>
         <ul>
           {allSessions.map((session) => {
             const timeObject = getTimeObject(session.duration)
@@ -96,16 +121,18 @@ export default async function Page() {
             const newDate = date.format("Do MMMM YYYY");
 
             return (
-              <li key={session.id}>
+              <li key={session.id} className="border border-black p-4">
                 You read {session.topic} for {timeObject.hours}h {timeObject.minutes}min on {newDate}
               </li>
             );
           })}
         </ul>
+        <p>Total time Read: {convertToTimeUnit(summary,timeUnit as timeUnit)}</p></>
       ) : (
         <p>You have no study sessions saved</p>
       )}
       <p></p>
+      <ExportDataForm setTimeUnit={setTimeUnit } timeUnit={timeUnit} startDate={startDate} endDate={endDate} setStartDate={setStartDate} setEndDate={setEndDate}/>
     </main>
   );
 }

@@ -2,6 +2,7 @@
 import { PrismaClient } from "@prisma/client";
 import moment from "moment";
 import { redirect } from "next/navigation";
+import Papa from "papaparse";
 
 const prisma = new PrismaClient();
 export default async function formSubmit(prevState: any, formData: FormData) {
@@ -51,9 +52,8 @@ export default async function formSubmit(prevState: any, formData: FormData) {
     }
   }
 }
- 
-export async function updateChart(startDate: string,endDate: string){
-   const allSessions = await prisma.session.groupBy({
+export async function getGroupedSessions(startDate: string, endDate: string) {
+  const sessions =  await prisma.session.groupBy({
     by:[
       "date"
     ],
@@ -71,6 +71,10 @@ export async function updateChart(startDate: string,endDate: string){
       },
     }
   );
+  return sessions
+}
+export async function updateChart(startDate: string,endDate: string){
+   const allSessions = await getGroupedSessions(startDate, endDate)
   console.log(allSessions)
   const modifiedSessions = allSessions.map((session)=>{
     return {totalTime:session._sum.duration ,dayOfWeek:moment(session.date).format("Do MMM 'YY")}
@@ -81,4 +85,34 @@ export async function updateChart(startDate: string,endDate: string){
 export async function hello(){
   console.log("hello from server")
   return "hello from client"
+}
+export async function getSessions(startDate:string,endDate:string){
+  return  prisma.session.findMany({
+    where:{
+      date:{
+        lte:new Date(endDate),
+        gte:new Date(startDate)
+      }
+    },
+    orderBy:[
+      {date:"asc"}
+    ]
+  })
+}
+
+export async function exportCSV(startDate: string,endDate: string){
+  const sessions = await getSessions(startDate,endDate)
+  console.log(sessions)
+  const newSessions = sessions.map((session)=> {
+    const topic = session.topic
+    const duration = session.duration
+    const date = session.date
+    return {
+      topic,
+      duration,
+      date
+    }
+  })
+  const csvObj = Papa.unparse(newSessions)
+  return csvObj
 }
