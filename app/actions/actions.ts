@@ -35,7 +35,7 @@ const recordingEnd = formData.get("recordingEnd")
       const timeElapsed = endTimeMoment.diff(startTimeMoment, "seconds");
       await db.insert(sessionTable).values({
         topic: topic.toString(),
-        duration: Number(timeElapsed.toString()),
+        duration: timeElapsed,
         date: new Date(moment(formattedDate).add(startTime.toString(),"hours").toDate()),
       })
       redirect("/view-sessions")

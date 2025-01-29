@@ -21,7 +21,7 @@ export default function FormButtons({
       disabled={disabled}
       type={type}
       onClick={onClick}
-      className={clsx("border-2 border-gray-600", disabled && "text-gray-500")}
+      className="w-24 text-black border-2 border-gray-600 px-4 py-1 rounded-md bg-slate-300 disabled:text-gray-400"
     >
       {children}
     </button>
@@ -36,42 +36,46 @@ export function SaveDialog(props: SaveDialogProps) {
       <Dialog.Trigger asChild>{props.trigger}</Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-45" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 bg-white">
-          <Dialog.Title className="py-4 px-2">Save Study Session</Dialog.Title>
+        <Dialog.Content className="fixed left-1/2 top-1/2 bg-white -translate-x-1/2 -translate-y-1/2 rounded-2xl py-8 px-12">
+          <Dialog.Title className="pb-6 flex justify-center">
+            Save Study Session
+          </Dialog.Title>
           <div>
             <h2>Add Details for your study session</h2>
-            <label className="block mx-2 mt-4">
-              Topic:
-              <input
-                required
-                type="text"
-                className="bg-gray-400 ml-2"
-                value={props.topic}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                  if (event.target.value) {
-                    props.setTopic(event.target.value);
-                  }
-                }}
-              />
+            <label className="block mx-2 mt-4 pb-2" htmlFor="topic">
+              Topic
             </label>
+            <input
+              id="topic"
+              required
+              type="text"
+              className="text-white bg-gray-300 focus:bg-gray-400 ml-2 rounded-md px-1 py-2 w-full"
+              value={props.topic}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                props.setTopic(event.target.value);
+              }}
+            />
+
             {props.operation === "save" ? (
               <>
-                <label className="block mx-2 mt-4">
+                <label className="block mx-2 mt-4 pb-2" htmlFor="date">
                   {" "}
                   Date:
-                  <input
-                    required
-                    type="date"
-                    className="bg-gray-400 ml-2 mb-4"
-                    value={props.date}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                      if (event.target.value) {
-                        props.setDate(event.target.value);
-                      }
-                    }}
-                  />
                 </label>
-                <label className="">
+                <input
+                  required
+                  id="date"
+                  type="date"
+                  className="bg-gray-300 focus:bg-gray-400 ml-2 mb-4 p-2 rounded-md block w-full"
+                  value={props.date}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                    if (event.target.value) {
+                      props.setDate(event.target.value);
+                    }
+                  }}
+                />
+
+                <label>
                   Start Time
                   <input
                     required
@@ -80,13 +84,14 @@ export function SaveDialog(props: SaveDialogProps) {
                     onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                       props.setStartTime(event.target.value);
                     }}
-                    className="mx-4 p-4"
+                    className="py-4  border border-gray-400 rounded-md w-36 p-6"
                   />
                 </label>
-                <label>
+                <label className="pl-4">
                   End Time
                   <input
                     required
+                    className="py-4  border border-gray-400 rounded-md w-36 p-6"
                     type="time"
                     value={props.endTime}
                     onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,12 +102,12 @@ export function SaveDialog(props: SaveDialogProps) {
               </>
             ) : undefined}
           </div>
-          <div className="flex justify-end">
+          <div className="flex justify-end mt-8">
             <Dialog.Close asChild>
               <button
                 type="button"
                 onClick={submit}
-                className="text-green-400 border border-gray-400"
+                className="hover:text-black text-gray-500 border border-gray-400 rounded-md px-4 py-2 bg-green-200 hover:bg-green-400"
               >
                 Save
               </button>
@@ -110,7 +115,7 @@ export function SaveDialog(props: SaveDialogProps) {
             <Dialog.Close asChild>
               <button
                 type="button"
-                className="text-red-400 border border-gray-400 ml-4"
+                className="hover:text-black text-gray-500 border border-gray-400 rounded-md px-4 py-2 bg-red-200 hover:bg-red-400 ml-4"
               >
                 Cancel
               </button>

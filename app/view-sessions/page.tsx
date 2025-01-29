@@ -30,7 +30,7 @@ export default function Page() {
     moment().startOf("day").subtract(6, "days").toString()
   );
   const [endDate, setEndDate] = useState(moment().toString());
-  
+
   useEffect(() => {
     const fn = async () => {
       const sessions = await getSessions(startDate, endDate);
@@ -44,11 +44,9 @@ export default function Page() {
     };
     fn();
   }, [startDate, endDate]);
-  
 
-  
   return (
-    <main className="flex flex-col justify-center items-center h-screen">
+    <main className="flex flex-col justify-center items-center pt-10">
       {allSessions.length > 0 ? (
         <>
           <ul>
@@ -57,7 +55,10 @@ export default function Page() {
               const date = moment(session.date, "YYYY-MM-DD");
               const newDate = date.format("Do MMMM YYYY");
               return (
-                <li key={session.id} className="border border-black p-4">
+                <li
+                  key={session.id}
+                  className="border border-black p-4 bg-slate-50"
+                >
                   You read {session.topic} for {timeObject.hours}h{" "}
                   {timeObject.minutes}min on {newDate}
                 </li>
@@ -65,7 +66,12 @@ export default function Page() {
             })}
           </ul>
           <p>
-            Total time Read: {convertToTimeUnit(summary, timeUnit as timeUnit)}{" "}
+            Total time Read:{" "}
+            {convertToTimeUnit(summary, timeUnit as timeUnit)! % 1 === 0
+              ? convertToTimeUnit(summary, timeUnit as timeUnit)
+              : convertToTimeUnit(summary, timeUnit as timeUnit)?.toFixed(
+                  2
+                )}{" "}
             {timeUnit === "hours"
               ? "hours"
               : timeUnit === "minutes"

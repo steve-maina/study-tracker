@@ -2,7 +2,7 @@
 
 import { updateChart } from "@/app/actions/actions";
 import { convertToTimeUnit, timeUnit } from "@/app/lib/assorted-c";
-import { Button } from "@mui/material";
+import { Button, useTheme } from "@mui/material";
 import { BarChart, ChartsText, ChartsTextProps } from "@mui/x-charts";
 import { Session } from "@prisma/client";
 import moment from "moment";
@@ -80,6 +80,7 @@ export default function SessionChart() {
   const [startDate, setStartDate] = useState(
     moment().startOf("day").subtract(6, "days")
   );
+  const theme = useTheme();
   const [endDate, setEndDate] = useState(moment());
   const [sessions, setSessions] = useState<Array<chartSession>>([]);
   useEffect(() => {
@@ -88,12 +89,13 @@ export default function SessionChart() {
   return (
     <>
       <div className="flex items-center w-full">
-      {sessions.length > 0 ?
-      <>
+        {sessions.length > 0 ? (
+          <>
             <BarChart
               slots={{
                 axisLabel: myChartText,
               }}
+              colors={[theme.palette.primary.main]}
               dataset={groupSessions(sessions, timeUnit)}
               xAxis={[{ scaleType: "band", dataKey: "date" }]}
               series={[
@@ -105,55 +107,67 @@ export default function SessionChart() {
                 },
               ]}
               width={400}
-              height={300} />
+              height={300}
+            />
 
-        <form>
-          <select
-            disabled={sessions.length === 0}
-            name="timeUnit"
-            id="timeUnit"
-            value={timeUnit}
-            onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {
-              setTimeUnit((prevValue) => {
-                return event.target.value as timeUnit;
-              });
-            }}
-          >
-            <option value="hours">Hours</option>
-            <option value="minutes">Minutes</option>
-            <option value="seconds">Seconds</option>
-          </select>
-          <label>
-            Start Date:{" "}
-            <input
-              type="date"
-              name="startDate"
-              value={startDate.format("YYYY-MM-DD")}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                setStartDate(moment(event.target.value));
-              }}
-            />
-          </label>
-          <label>
-            End Date:{" "}
-            <input
-              type="date"
-              name="startDate"
-              value={endDate.format("YYYY-MM-DD")}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                setEndDate(moment(event.target.value));
-              }}
-            />
-          </label>
-          <Button variant="contained" onClick={submit}>
-            Submit
-          </Button>
-        </form></>
-        : (
-          <p className="text-center grow">No study sessions recorded.<Link href="/create-session" className="underline decoration-blue-300 decoration-2">Add One</Link></p>
+            <form>
+              <select
+                className="mr-4 bg-white"
+                disabled={sessions.length === 0}
+                name="timeUnit"
+                id="timeUnit"
+                value={timeUnit}
+                onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {
+                  setTimeUnit((prevValue) => {
+                    return event.target.value as timeUnit;
+                  });
+                }}
+              >
+                <option value="hours">Hours</option>
+                <option value="minutes">Minutes</option>
+                <option value="seconds">Seconds</option>
+              </select>
+              <label>
+                Start Date:{" "}
+                <input
+                  className="mx-6 border-2 border-gray-400"
+                  type="date"
+                  name="startDate"
+                  value={startDate.format("YYYY-MM-DD")}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                    setStartDate(moment(event.target.value));
+                  }}
+                />
+              </label>
+              <label>
+                End Date:{" "}
+                <input
+                  type="date"
+                  className="mx-6 border-2 border-gray-400"
+                  name="startDate"
+                  value={endDate.format("YYYY-MM-DD")}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                    setEndDate(moment(event.target.value));
+                  }}
+                />
+              </label>
+              <Button variant="contained" onClick={submit}>
+                Submit
+              </Button>
+            </form>
+          </>
+        ) : (
+          <p className="text-center grow">
+            No study sessions recorded.
+            <Link
+              href="/create-session"
+              className="underline decoration-blue-300 decoration-2"
+            >
+              Add One
+            </Link>
+          </p>
         )}
       </div>
-      
     </>
   );
 }
