@@ -1,6 +1,6 @@
 "use client";
 
-import { updateChart,hello } from "@/app/actions/actions";
+import { updateChart } from "@/app/actions/actions";
 import { convertToTimeUnit, timeUnit } from "@/app/lib/assorted-c";
 import { Button } from "@mui/material";
 import { BarChart, ChartsText, ChartsTextProps } from "@mui/x-charts";
@@ -20,28 +20,49 @@ function myChartText(props: ChartsTextProps) {
   </ChartsText>
 
 }
+type chartSession = {
+  id:number;
+  topic:string;
+  date:Date;
+  duration:number;
+}
+function groupSessions(sessions:Array<chartSession>,timeUnit:timeUnit){
+  const newSessions:{
+    [date:string]:Array<chartSession>
+  } = {}
+  for(const session of sessions){
+    const date = moment(session.date).format("YYYY-MM-DD")
+    if(newSessions[date]) {
+      newSessions[date].push({...session})
+    } else {
+      newSessions[date] = [{...session}]
+    }
+  }
+  const summary:Array<{date:string,totalTime:number}> = []
+  for(const i in newSessions){
+    const num = newSessions[i].reduce((acc:number,arr:chartSession)=>{
+      return acc + (timeUnit === "hours" ? arr.duration / 3600 : (timeUnit === "minutes" ? arr.duration / 60 : arr.duration))
+    },0)
+    summary.push({date:moment(i).format("Do MMM"),totalTime:num})
+  }
+  
+  return summary
+}
 
 export default function SessionChart() {
   async function  submit(event: React.FormEvent){
     event.preventDefault()
-    setSessions(await updateChart(startDate,endDate))
+    const sessions = await updateChart(startDate.toDate().toISOString(),endDate.toDate().toISOString())
+    
+    setSessions(sessions)
   }
   async function setInitialSessions() {
-    setSessions(await updateChart(startDate,endDate))
+    setSessions(await updateChart(startDate.toDate().toISOString(),endDate.toDate().toISOString()))
   }
   const [timeUnit, setTimeUnit] = useState<timeUnit>("minutes")
-  const[startDate,setStartDate] = useState(moment().subtract(7,"days").format("YYYY-MM-DD"))
-  const[endDate,setEndDate] = useState(moment().subtract(1,"days").format("YYYY-MM-DD"))
-  const [sessions, setSessions] = useState<Array<ModifiedSessions>>([])
-  // useEffect(()=>{
-  //   // const newSessions = sessions.map((session) => {
-  //   //   return {
-  //   //     ...session,
-  //   //     totalTime: convertToTimeUnit(session.totalTime as number,timeUnit)
-  //   //   }
-  //   // })
-  //   setSessions([...sessions])
-  // },[timeUnit])
+  const[startDate,setStartDate] = useState(moment().startOf("day").subtract(6,"days"))
+  const[endDate,setEndDate] = useState(moment())
+  const [sessions, setSessions] = useState<Array<chartSession>>([])
   useEffect(()=>{
     setInitialSessions()
   },[])
@@ -54,14 +75,9 @@ export default function SessionChart() {
       slots={{
         axisLabel:myChartText
       }}
-        dataset={sessions.map((session)=>{
-          return {
-            ...session,
-            summary:convertToTimeUnit(session.totalTime as number,timeUnit)
-          }
-        })}
-        xAxis={[{ scaleType: "band", dataKey: "dayOfWeek"}]}
-        series={[{ dataKey: "summary",label:`${timeUnit.charAt(0).toUpperCase()+timeUnit.slice(1)} read` }]}
+        dataset={groupSessions(sessions,timeUnit)}
+        xAxis={[{ scaleType: "band", dataKey: "date"}]}
+        series={[{ dataKey: "totalTime",label:`${timeUnit.charAt(0).toUpperCase()+timeUnit.slice(1)} read` }]}
         width={400}
         height={300}
       />
@@ -71,7 +87,6 @@ export default function SessionChart() {
         name="timeUnit" id="timeUnit" value={timeUnit} onChange={
           (event: React.ChangeEvent<HTMLSelectElement>) => {
             setTimeUnit((prevValue) =>{
-            
               return event.target.value as timeUnit
             })
           }
@@ -80,17 +95,16 @@ export default function SessionChart() {
           <option value="minutes">Minutes</option>
           <option value="seconds">Seconds</option>
         </select>
-        <label>Start Date: <input type="date" name="startDate" value={startDate} onChange={(event:React.ChangeEvent<HTMLInputElement>)=> {
-          setStartDate(event.target.value)
+        <label>Start Date: <input type="date" name="startDate" value={startDate.format("YYYY-MM-DD")} onChange={(event:React.ChangeEvent<HTMLInputElement>)=> {
+          setStartDate(moment(event.target.value))
         }}/></label>
-        <label>End Date: <input type="date" name="startDate" value={endDate} onChange={
+        <label>End Date: <input type="date" name="startDate" value={endDate.format("YYYY-MM-DD")} onChange={
           (event:React.ChangeEvent<HTMLInputElement>) => {
-            setEndDate(event.target.value)
+            setEndDate(moment(event.target.value))
           }
         }/></label>
         <Button variant="contained" onClick={submit}>Submit</Button>
       </form>
-     
       </div>
     </>
   );

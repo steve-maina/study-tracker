@@ -1,10 +1,12 @@
 "use server";
-import { PrismaClient } from "@prisma/client";
+import { db } from "@/drizzle/drizzle-db";
+import { sessionTable } from "@/drizzle/schemas/schema";
+
+import { and, asc, gte, lte, sum } from "drizzle-orm";
 import moment from "moment";
 import { redirect } from "next/navigation";
 import Papa from "papaparse";
 
-const prisma = new PrismaClient();
 export default async function formSubmit(prevState: any, formData: FormData) {
   const date = formData.get("day");
   const topic = formData.get("topic");
@@ -13,96 +15,59 @@ export default async function formSubmit(prevState: any, formData: FormData) {
   const endTime = formData.get("end");
   const operation = formData.get("operation");
   const formattedDate = date?.toString().replace(/ /gi, "-");
+const recordingEnd = formData.get("recordingEnd")
 
   if (operation === "create") {
     formattedDate &&
+     recordingEnd &&
       topic &&
       duration &&
-      prisma.session
-        .create({
-          data: {
-            topic: topic.toString(),
-            duration: Number(duration.toString()),
-            date: new Date(formattedDate),
-            month: Number(moment(formattedDate).format("M")),
-            year: Number(moment(formattedDate).format("YYYY")),
-            day: Number(moment(formattedDate).format("D")),
-          },
-        })
-        .then(() => prisma.$disconnect());
-    redirect("/view-sessions");
+      await db.insert(sessionTable).values({
+        topic:topic.toString(),
+        duration:Number(duration.toString()),
+        date:moment(recordingEnd.toString()).subtract(Number(duration.toString()),"seconds").toDate()
+      })
+      redirect("/view-sessions")
   } else if (operation === "save") {
     if (formattedDate && topic && startTime && endTime) {
       const startTimeMoment = moment(startTime.toString(), "HH:mm");
       const endTimeMoment = moment(endTime.toString(), "HH:mm");
       const timeElapsed = endTimeMoment.diff(startTimeMoment, "seconds");
-      prisma.session
-        .create({
-          data: {
-            topic: topic.toString(),
-            duration: Number(timeElapsed.toString()),
-            date: new Date(formattedDate),
-            month: Number(moment(formattedDate).format("M")),
-            year: Number(moment(formattedDate).format("YYYY")),
-            day: Number(moment(formattedDate).format("D")),
-          },
-        })
-        .then(() => prisma.$disconnect());
-      redirect("/view-sessions");
+      await db.insert(sessionTable).values({
+        topic: topic.toString(),
+        duration: Number(timeElapsed.toString()),
+        date: new Date(moment(formattedDate).add(startTime.toString(),"hours").toDate()),
+      })
+      redirect("/view-sessions")
     }
   }
 }
 export async function getGroupedSessions(startDate: string, endDate: string) {
-  const sessions =  await prisma.session.groupBy({
-    by:[
-      "date"
-    ],
-      where: {
-        date:{
-          lte:new Date(endDate),
-          gte:new Date(startDate)
-        }
-      },
-      orderBy:[
-        {date:"asc"}
-      ],
-      _sum: {
-        duration: true
-      },
-    }
-  );
+  const start = new Date(startDate)
+  const end = new Date(endDate)
+  const sessions = db.select({"totalTime":sum(sessionTable.duration),"date":sessionTable.date}).from(sessionTable)
+  .where(and(gte(sessionTable.date, start),lte(sessionTable.date, end)))
+  .groupBy(sessionTable.date)
+  .orderBy(sessionTable.date)
   return sessions
+  
 }
 export async function updateChart(startDate: string,endDate: string){
-   const allSessions = await getGroupedSessions(startDate, endDate)
-  console.log(allSessions)
-  const modifiedSessions = allSessions.map((session)=>{
-    return {totalTime:session._sum.duration ,dayOfWeek:moment(session.date).format("Do MMM 'YY")}
-  })
-  return modifiedSessions
-}
-
-export async function hello(){
-  console.log("hello from server")
-  return "hello from client"
+  const allSessions = await getSessions(startDate, endDate)
+  return allSessions
 }
 export async function getSessions(startDate:string,endDate:string){
-  return  prisma.session.findMany({
-    where:{
-      date:{
-        lte:new Date(endDate),
-        gte:new Date(startDate)
-      }
-    },
-    orderBy:[
-      {date:"asc"}
-    ]
-  })
+  const start = new Date(startDate)
+  const end = new Date(endDate)
+  
+  return db.select().from(sessionTable)
+  .where(and(gte(sessionTable.date, start),lte(sessionTable.date, end)))
+  .orderBy(asc(sessionTable.date))
 }
 
 export async function exportCSV(startDate: string,endDate: string){
   const sessions = await getSessions(startDate,endDate)
-  console.log(sessions)
+  
   const newSessions = sessions.map((session)=> {
     const topic = session.topic
     const duration = session.duration

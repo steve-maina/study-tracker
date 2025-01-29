@@ -1,4 +1,4 @@
 type ModifiedSessions = {
-    totalTime: number | null;
+    totalTime: string | null;
     dayOfWeek: string;
 }

@@ -5,46 +5,36 @@ import Form from 'next/form'
 import FormButtons, { SaveDialog } from "./Elements";
 import formSubmit from "@/app/actions/actions";
 import moment from "moment";
+import { StartSessionProps } from "@/types";
 
-export default function StartSession(
-  {operation,setIsTimerRunning,timerId,setTimeElapsed,timeElapsed, isTimerRunning,startTime, setStartTime, endTime, setEndTime}:{
-    setIsTimerRunning:React.Dispatch<React.SetStateAction<boolean>>;
-    timerId:React.RefObject<NodeJS.Timeout | null>;
-    setTimeElapsed:React.Dispatch<React.SetStateAction<number>>;
-    timeElapsed:number;
-    isTimerRunning:boolean;
-    startTime:string;
-    operation:string;
-    endTime:string;
-    setStartTime:React.Dispatch<React.SetStateAction<string>>;
-    setEndTime:React.Dispatch<React.SetStateAction<string>>;
-  }
-) {
+export default function StartSession(props:StartSessionProps) {
+  
   function startTimer(){
-    setIsTimerRunning((prevState:boolean)=>true)
-    timerId.current = setInterval(() => {
-      setTimeElapsed((prevState:number)=>{
+    props.setIsTimerRunning((prevState:boolean)=>true)
+    props.timerId.current = setInterval(() => {
+      props.setTimeElapsed((prevState:number)=>{
         return prevState + 1;
       })
     },1000)
   }
   function stopTimer(){
-    setIsTimerRunning((prevState:boolean)=>false)
-    if(timerId.current !== null){
-      clearInterval(timerId.current)
-      setTimeElapsed((prevState: number)=> 0)
+    props.setIsTimerRunning((prevState:boolean)=>false)
+    if(props.timerId.current !== null){
+      clearInterval(props.timerId.current)
+      props.setTimeElapsed((prevState: number)=> 0)
     }
   }
   function pauseTimer() {
-    setIsTimerRunning((prevState:boolean)=>false)
-    if(timerId.current !== null){
-      clearInterval(timerId.current)
+    props.setIsTimerRunning((prevState:boolean)=>false)
+    if(props.timerId.current !== null){
+      clearInterval(props.timerId.current)
     }
+    setRecordingEnd(moment())
   }
   function clearDialogInputs() {
     setTopic("")
-    setStartTime("")
-    setEndTime("")
+    props.setStartTime("")
+    props.setEndTime("")
     setDate(moment().format("YYYY MM DD"))
   }
   function formatTimeElapsed(durationInSeconds: string) {
@@ -63,28 +53,42 @@ export default function StartSession(
 
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [topic, setTopic] = useState("")
-  const [timezone, setTimezone] = useState<string |undefined>(undefined)
+  const [recordingEnd, setRecordingEnd] = useState<moment.Moment>(moment())
   const [date,setDate] = useState(moment().format("YYYY MM DD"))
   const formRef = useRef<HTMLFormElement | null>(null)
-  const triggerBtn = <FormButtons type="button" disabled={isTimerRunning ||isPending || (operation === "create" ? timeElapsed < 60:false)} onClick={clearDialogInputs}>Save Session</FormButtons>
+  const triggerBtn = <FormButtons type="button" disabled={props.isTimerRunning ||isPending || (props.operation === "create" ? props.timeElapsed < 60:false)} onClick={clearDialogInputs}>Save Session</FormButtons>
+  const saveDialogProps = {
+    operation:props.operation,
+    date: date,
+    setDate: setDate,
+    topic:topic,
+    setTopic:setTopic,
+    startTime:props.startTime,
+    setStartTime:props.setStartTime,
+    endTime:props.endTime,
+    setEndTime:props.setEndTime,
+    formRef:formRef,
+    trigger: triggerBtn,
+    open:isDialogOpen,
+    setOpen:setIsDialogOpen
+  }
   return (
     <>
-      {operation =="create"? <p>Start Recording Session</p>:undefined}
+      {props.operation =="create"? <p>Start Recording Session</p>:undefined}
       <Form action={formAction} ref={formRef}>
         <p className="text-center">{
-        operation == "create"? formatTimeElapsed(timeElapsed.toString()):"Save a past study session"}</p>
+        props.operation == "create"? formatTimeElapsed(props.timeElapsed.toString()):"Save a past study session"}</p>
         <input type="hidden" value={topic} name="topic"/>
         <input type="hidden" value={date} name="day" />
-        <input type="hidden" value={timeElapsed} name="duration" />
-        <input type="hidden" value={startTime} name="start" />
-        <input type="hidden" value={endTime} name="end" />
-        <input type="hidden" value={operation} name="operation" />
-        <input type="hidden" value={timezone} name="timezone" />
+        <input type="hidden" value={props.timeElapsed} name="duration" />
+        <input type="hidden" value={props.startTime} name="start" />
+        <input type="hidden" value={props.endTime} name="end" />
+        <input type="hidden" value={props.operation} name="operation" />
+        <input type="hidden" value={recordingEnd.toISOString()} name="recordingEnd" />
         <div className="flex justify-between">
-          {operation === "create" ? <><FormButtons type="button" disabled={isPending} onClick={isTimerRunning ? pauseTimer : startTimer}>{isTimerRunning ? "Pause" :
-            (timeElapsed > 0 ? "Resume" : "Start")}</FormButtons><FormButtons type="button" disabled={isPending} onClick={stopTimer}>Reset</FormButtons></>:undefined}
-          <SaveDialog operation={operation} date={date} setDate={setDate} topic={topic} setTopic={setTopic} startTime={startTime} setStartTime={setStartTime} endTime={endTime} setEndTime={setEndTime}
-          formRef={formRef} trigger={triggerBtn} open={isDialogOpen} setOpen={setIsDialogOpen}/>
+          {props.operation === "create" ? <><FormButtons type="button" disabled={isPending} onClick={props.isTimerRunning ? pauseTimer : startTimer}>{props.isTimerRunning ? "Pause" :
+            (props.timeElapsed > 0 ? "Resume" : "Start")}</FormButtons><FormButtons type="button" disabled={isPending} onClick={stopTimer}>Reset</FormButtons></>:undefined}
+          <SaveDialog {...saveDialogProps} />
         </div>
       </Form>
     </>

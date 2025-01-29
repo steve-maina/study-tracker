@@ -1,21 +1,14 @@
 "use client";
-import { exportCSV } from "@/app/actions/actions";
+import { ExportDataFormProps } from "@/types";
 import { Button } from "@mui/material";
 import moment from "moment";
-import { useState } from "react";
 
 
-export default function ExportDataForm({timeUnit,setTimeUnit,startDate,endDate,setStartDate, setEndDate}:{
-  startDate:string,
-  endDate:string,
-  timeUnit:string,
-  setTimeUnit:React.Dispatch<React.SetStateAction<string>>,
-  setStartDate:React.Dispatch<React.SetStateAction<string>>,
-  setEndDate:React.Dispatch<React.SetStateAction<string>>
-}) {
-  
+
+
+export default function ExportDataForm({timeUnit,setTimeUnit,startDate,endDate,setStartDate, setEndDate}:ExportDataFormProps) {
   const handleClick = async () => {
-    const response = await fetch(`/api/file?start=${startDate}&end=${endDate}`);
+    const response = await fetch(`/api/file?start=${encodeURIComponent(startDate)}&end=${encodeURIComponent(endDate)}`);
     const blob = await response.blob();
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -28,16 +21,16 @@ export default function ExportDataForm({timeUnit,setTimeUnit,startDate,endDate,s
     <form>
       <input
         type="date"
-        value={startDate}
+        value={moment(startDate).format("YYYY-MM-DD")}
         onChange={(event) => {
-          setStartDate(event.target.value);
+          setStartDate(moment(event.target.value).toString());
         }}
       />
       <input
         type="date"
-        value={endDate}
+        value={moment(endDate).format("YYYY-MM-DD")}
         onChange={(event) => {
-          setEndDate(event.target.value);
+          setEndDate(moment(event.target.value).toString());
         }}
       />
       <select value={timeUnit} onChange={(e)=> {
