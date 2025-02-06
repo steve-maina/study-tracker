@@ -46,4 +46,9 @@ next-env.d.ts
 
 study.db
 drizzle/migrations
-drizzle/test.ts
+drizzle/mx.ts
+
+__tests__/
+
+jest.config.ts
+jest.setup.ts
